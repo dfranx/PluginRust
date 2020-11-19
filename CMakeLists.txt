@@ -28,5 +28,5 @@ set_target_properties(PluginRust PROPERTIES PREFIX "")
 target_include_directories(PluginRust PRIVATE libs inc)
 
 if (NOT MSVC)
-	target_compile_options(GIFCapture PRIVATE -Wno-narrowing)
+	target_compile_options(PluginRust PRIVATE -Wno-narrowing)
 endif()

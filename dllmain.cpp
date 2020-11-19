@@ -1,4 +1,7 @@
-#include <Windows.h>
+#define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
+	#include <windows.h>
+#endif
 #include <PluginAPI/Plugin.h>
 #include <imgui/imgui.h>
 
@@ -27,8 +30,13 @@ namespace rs
 		virtual bool Init(bool isWeb, int sedVersion) {
 			m_buildLangDefinition();
 			m_spv = nullptr;
-			m_codegenPath = "rustc_codegen_spirv.dll";
 			
+#ifdef _WIN32
+			m_codegenPath = "rustc_codegen_spirv.dll";
+#else
+			m_codegenPath = "librustc_codegen_spirv.so";
+#endif	
+		
 			if (sedVersion == 1003005)
 				m_hostVersion = 1;
 			else
@@ -180,7 +188,7 @@ namespace rs
 			if (strcmp(key, "codegen") == 0) {
 				m_codegenPath = std::string(val);
 				if (!std::filesystem::exists(m_codegenPath)) {
-					printf("[RSHADERS] codegen .dll doesn't exists.\n");
+					printf("%s\n[RSHADERS] codegen .dll doesn't exists.\n", m_codegenPath.c_str());
 				}
 			}
 		}
@@ -219,7 +227,9 @@ namespace rs
 				AddMessage(Messages, ed::plugin::MessageType::Error, nullptr, "Cargo not properly set up", -1);
 				return m_spv;
 			}
-
+			
+			printf("starting to parse!\n");
+			
 			// TODO: split by \n then parse...
 			bool compileSuccess = true;
 			std::stringstream outputParser(output);
@@ -277,9 +287,15 @@ namespace rs
 				return nullptr;
 			}
 
+			printf("starting to read spv!\n");
+			
 
 			// read from .spv file
 			FILE* reader = fopen("rust_crates/shader/target/spirv-unknown-unknown/release/rust_shader.spv", "rb");
+			if (reader == nullptr) {
+				*compiled = false;
+				return nullptr;
+			}
 			fseek(reader, 0, SEEK_END);
 			long fsize = ftell(reader);
 			fseek(reader, 0, SEEK_SET);
@@ -475,7 +491,8 @@ namespace rs
 			std::string result;
 			std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
 			if (!pipe) {
-				throw std::runtime_error("popen() failed!");
+				printf("Failed to run exec()");
+				return "";
 			}
 			while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
 				result += buffer.data();
@@ -507,18 +524,20 @@ extern "C" {
 	}
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule,
-	DWORD  ul_reason_for_call,
-	LPVOID lpReserved
-)
+#ifdef _WIN32
+BOOL APIENTRY DllMain( HMODULE hModule,
+                       DWORD  ul_reason_for_call,
+                       LPVOID lpReserved
+                     )
 {
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		break;
-	}
-	return TRUE;
+    switch (ul_reason_for_call)
+    {
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
 }
+#endif
