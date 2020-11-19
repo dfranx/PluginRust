@@ -428,7 +428,7 @@ namespace rs
 
 			// regex
 			m_langDefRegex.clear();
-			m_langDefRegex.push_back(std::make_pair("[ \\t]*#[ \\t]*[a-zA-Z_]+", ed::plugin::TextEditorPaletteIndex::Preprocessor));
+			m_langDefRegex.push_back(std::make_pair("[ \\t]*#\\!?\\[[^\\]]*\\]", ed::plugin::TextEditorPaletteIndex::Preprocessor));
 			m_langDefRegex.push_back(std::make_pair("L?\\\"(\\\\.|[^\\\"])*\\\"", ed::plugin::TextEditorPaletteIndex::String));
 			m_langDefRegex.push_back(std::make_pair("\\'\\\\?[^\\']\\'", ed::plugin::TextEditorPaletteIndex::CharLiteral));
 			m_langDefRegex.push_back(std::make_pair("[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?[fF]?", ed::plugin::TextEditorPaletteIndex::Number));
